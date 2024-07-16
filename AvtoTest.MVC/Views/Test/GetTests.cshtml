@@ -1,0 +1,17 @@
+﻿@model List<AvtoTest.Data.Entities.TestEntities.Test>
+@{
+    string path = "D:\\.Net Projects\\Avto Test Web\\AvtoTest.Data\\bin\\Debug\\net7.0\\AvtoTest";
+}
+@foreach (var test in Model)
+{
+
+    <p>@test.Id @test.Question</p>
+    <br/>
+    foreach (var choice in test.Choices)
+    {
+        <h4>@choice.Text</h4>
+    }
+    <br/>
+    <h4>Exist: @test.Media.Exist</h4>
+    <h5>@test.Description</h5>
+}
