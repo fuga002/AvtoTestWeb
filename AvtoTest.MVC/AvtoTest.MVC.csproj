@@ -11,4 +11,22 @@
     <ProjectReference Include="..\AvtoTest.Services\AvtoTest.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\Home\CheckingView.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Views\Home\CheckingView.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Test\GetPath.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Test\TestResults.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\Test\TestResults.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\Test\GetPath.cshtml" />
+  </ItemGroup>
+
 </Project>

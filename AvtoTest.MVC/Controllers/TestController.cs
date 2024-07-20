@@ -15,25 +15,44 @@ public class TestController : Controller
         _testService = testService;
     }
 
-    public IActionResult GetTests(Ticket ticket)
+    public IActionResult GetTests(byte ticketId,int testId = 0, string language = null)
     {
+        var ticket = new Ticket() { Id = ticketId };
+
+        if (!string.IsNullOrEmpty(language))
+        {
+            _testService.ChangeLanguage(language);
+        }
+
+        if (testId == 0)
+        {
+            testId = ticket.StartIndex;
+        }
+
         var tests = _testService.Tests.
             Where(t => t.Id >= ticket.StartIndex &&
                        t.Id <= ticket.EndIndex).
             ToList();
+
+        var test = tests.Find(t => t.Id == testId);
+
         ViewBag.TicketId = ticket.Id;
 
         ViewBag.Context = HttpContext;
 
-        return View(tests);
+        ViewBag.Ticket = ticket;
+
+
+        ViewBag.Tests = tests;
+
+        return View(test);
     }
 
     [HttpPost]
-    public IActionResult GetTests(byte ticketId = 0, int testId = 0, int choiceId = 0)
+    public IActionResult GetTestsPost(byte ticketId = 0, int testId = 0, int choiceId = 0)
     {
         int count = GetCorrectAnswersCount();
        
-        var ticket = new Ticket() { Id = ticketId };
 
         var test = _testService.Tests.Find(t => t.Id == testId);
         if (test.Choices[choiceId].Answer)
@@ -45,7 +64,7 @@ public class TestController : Controller
             AddCookie(testId.ToString(),choiceId.ToString());
             AddCookie(CorrectAnswersCount,count.ToString());
         }
-        return RedirectToAction("GetTests", ticket);
+        return RedirectToAction("GetTests", new {ticketId = ticketId,testId = testId});
     }
 
     public IActionResult Tickets()
@@ -57,7 +76,19 @@ public class TestController : Controller
     public IActionResult Tickets(byte id)
     {
         var ticket = new Ticket() { Id = id };
-        return RedirectToAction("GetTests",ticket);
+
+        DeleteCookies(ticket);
+
+        return RedirectToAction("GetTests", new { ticketId = id, testId = 0});
+    }
+
+    public IActionResult TestResults(byte ticketId)
+    {
+        var correctAnswerCount = GetCorrectAnswersCount();
+        ViewBag.Count = correctAnswerCount;
+        var ticket = new Ticket() { Id = ticketId };
+        DeleteCookies(ticket);
+        return View();
     }
 
 
@@ -69,6 +100,27 @@ public class TestController : Controller
             HttpContext.Response.Cookies.Delete(key);
         }
         HttpContext.Response.Cookies.Append(key, value);
+    }
+
+    private void DeleteCookie(string key)
+    {
+        var check = CheckCookie(key);
+        if (!check)
+        {
+            HttpContext.Response.Cookies.Delete(key);
+        }
+    }
+
+    private void DeleteCookies(Ticket ticket)
+    {
+        for (int i = ticket.StartIndex; i <= ticket.EndIndex; i++)
+        {
+            DeleteCookie(i.ToString());
+            if (i == ticket.StartIndex)
+            {
+                DeleteCookie(CorrectAnswersCount);
+            }
+        }
     }
 
     private bool CheckCookie(string key)
@@ -86,6 +138,11 @@ public class TestController : Controller
     }
 
 
-
+    public IActionResult GetPath()
+    {
+        var path = _testService.GetPath();
+        ViewBag.Path = path;
+        return View();
+    }
 
 }

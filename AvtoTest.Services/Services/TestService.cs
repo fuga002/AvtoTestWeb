@@ -18,4 +18,9 @@ public class TestService
     {
         Tests = _repository.ReadFromFile(language);
     }
+
+    public string GetPath()
+    {
+        return _repository.GetPath();
+    }
 }
