@@ -9,7 +9,7 @@
     var test = Model;
 
     List <Test> tests = ViewBag.Tests;
-
+        
 }
 
 
@@ -74,6 +74,7 @@
                         else
                         {
                             <a asp-action="GetTests" asp-route-ticketId="@ticket.Id" asp-route-testId="@i">@i</a>
+
                         }
                     }
 
@@ -116,15 +117,18 @@
                                 if (choice.Answer)
                                 {
                                     <button disabled class="btn btn-success" type="submit">@choice.Text</button>
+                                    <br/>
                                 }
                                 else
                                 {
                                     <button disabled class="btn btn-danger" type="submit">@choice.Text</button>
+                                    <br/>
                                 }
                             }
                             else
                             {
                                 <button disabled class="btn " type="submit">@choice.Text</button>
+                                <br/>
                             }
                 
                         }
@@ -133,8 +137,9 @@
                             <button  asp-route-ticketId="@ticketId" 
                                      asp-route-testId="@test.Id"
                                      asp-route-choiceId="@row"
-                                    asp-action="GetTestsPost"
+                                     asp-action="GetTestsPost"
                                      class="btn btn-primary" type="submit">@choice.Text</button>
+                            <br/>
                         }
                         <br>
                         row++;

@@ -1,8 +1,10 @@
 ﻿using AvtoTest.Data.Entities.TestEntities;
 using AvtoTest.Services.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AvtoTest.MVC.Controllers;
+
 
 public class TestController : Controller
 {
@@ -14,15 +16,20 @@ public class TestController : Controller
     {
         _testService = testService;
     }
-
+    [Authorize]
     public IActionResult GetTests(byte ticketId,int testId = 0, string language = null)
     {
         var ticket = new Ticket() { Id = ticketId };
 
         if (!string.IsNullOrEmpty(language))
         {
-            _testService.ChangeLanguage(language);
+            AddCookie("language",language);
         }
+        else
+        {
+            language = GetCookie("language");
+        }
+        _testService.ChangeLanguage(language);
 
         if (testId == 0)
         {
@@ -81,13 +88,14 @@ public class TestController : Controller
 
         return RedirectToAction("GetTests", new { ticketId = id, testId = 0});
     }
-
+    [Authorize]
     public IActionResult TestResults(byte ticketId)
     {
         var correctAnswerCount = GetCorrectAnswersCount();
         ViewBag.Count = correctAnswerCount;
         var ticket = new Ticket() { Id = ticketId };
         DeleteCookies(ticket);
+        DeleteCookie("language");
         return View();
     }
 
@@ -100,6 +108,14 @@ public class TestController : Controller
             HttpContext.Response.Cookies.Delete(key);
         }
         HttpContext.Response.Cookies.Append(key, value);
+    }
+
+    private string GetCookie(string key)
+    {
+        string value = HttpContext.Request.Cookies[key];
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+        return value;
     }
 
     private void DeleteCookie(string key)
