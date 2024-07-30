@@ -10,6 +10,8 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
+using AvtoTest.Data.Context;
+using AvtoTest.Data.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -29,13 +31,14 @@ namespace AvtoTest.MVC.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly AppDbContext _appDbContext;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender, AppDbContext appDbContext)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -43,6 +46,7 @@ namespace AvtoTest.MVC.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _appDbContext = appDbContext;
         }
 
         /// <summary>
@@ -117,6 +121,13 @@ namespace AvtoTest.MVC.Areas.Identity.Pages.Account
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, Input.Password);
+
+                var customUser = new CustomUser()
+                {
+                    UserId = user.Id
+                };
+                _appDbContext.CustomUsers.Add(customUser);
+                await _appDbContext.SaveChangesAsync();
 
                 if (result.Succeeded)
                 {

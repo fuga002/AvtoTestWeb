@@ -1,7 +1,12 @@
-﻿using AvtoTest.Data.Entities.TestEntities;
+﻿using AvtoTest.Data.Context;
+using AvtoTest.Data.Entities;
+using AvtoTest.Data.Entities.TestEntities;
 using AvtoTest.Services.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Net.Sockets;
 
 namespace AvtoTest.MVC.Controllers;
 
@@ -11,15 +16,40 @@ public class TestController : Controller
 
     private readonly TestService _testService;
     private const string CorrectAnswersCount = "CorrectAnswersCount";
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly AppDbContext _appDbContext;
 
-    public TestController(TestService testService)
+    public TestController(TestService testService, 
+        UserManager<IdentityUser> userManager, AppDbContext appDbContext)
     {
         _testService = testService;
+        _userManager = userManager;
+        _appDbContext = appDbContext;
     }
     [Authorize]
-    public IActionResult GetTests(byte ticketId,int testId = 0, string language = null)
+    public async Task<IActionResult> GetTests(byte ticketId,int testId = 0, string language = null, bool retake = false)
     {
-        var ticket = new Ticket() { Id = ticketId };
+        var user = await GetUser();
+
+        var result = await _appDbContext.Results.FirstOrDefaultAsync(r => r.TicketId == 
+            ticketId && r.UserId == user.Id);
+
+        var ticket = new Ticket();
+
+        if (result is not null && retake == false)
+        {
+            return RedirectToAction("Results",result);
+        }
+
+        if (retake && result is not null)
+        {
+            _appDbContext.Results.Remove(result);
+            await _appDbContext.SaveChangesAsync();
+        }
+
+        ticket = new Ticket() { Id = ticketId };
+        
+         
 
         if (!string.IsNullOrEmpty(language))
         {
@@ -74,6 +104,11 @@ public class TestController : Controller
         return RedirectToAction("GetTests", new {ticketId = ticketId,testId = testId});
     }
 
+    public async Task<IActionResult> Results(Result result)
+    {
+        return View(result);
+    }
+
     public IActionResult Tickets()
     {
         return View();
@@ -89,11 +124,24 @@ public class TestController : Controller
         return RedirectToAction("GetTests", new { ticketId = id, testId = 0});
     }
     [Authorize]
-    public IActionResult TestResults(byte ticketId)
+    public async Task<IActionResult> TestResults(byte ticketId)
     {
         var correctAnswerCount = GetCorrectAnswersCount();
         ViewBag.Count = correctAnswerCount;
         var ticket = new Ticket() { Id = ticketId };
+
+        var user = await GetUser();
+
+        var result = new Result()
+        {
+            TicketId = ticket.Id,
+            CorrectAnswersCount = (byte)correctAnswerCount,
+            UserId = user!.Id
+        };
+
+        _appDbContext.Results.Add(result);
+        await _appDbContext.SaveChangesAsync();
+
         DeleteCookies(ticket);
         DeleteCookie("language");
         return View();
@@ -159,6 +207,11 @@ public class TestController : Controller
         var path = _testService.GetPath();
         ViewBag.Path = path;
         return View();
+    }
+
+    private async Task<IdentityUser> GetUser()
+    {
+        return await _userManager!.GetUserAsync(User)!;
     }
 
 }

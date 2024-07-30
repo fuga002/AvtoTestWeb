@@ -18,6 +18,7 @@
   <ItemGroup>
     <_ContentIncludedByDefault Remove="Views\Home\CheckingView.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Test\GetPath.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Test\Results.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Test\TestResults.cshtml" />
   </ItemGroup>
 
@@ -39,6 +40,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\Test\Results.cshtml" />
   </ItemGroup>
 
 </Project>

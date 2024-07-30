@@ -14,5 +14,6 @@ public class AppDbContext:IdentityDbContext<IdentityUser>
     }
 
     public DbSet<CustomUser> CustomUsers { get; set; }
+    public DbSet<Result> Results { get; set; }
 
 }
