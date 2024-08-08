@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvtoTest.MVC", "AvtoTest.MVC\AvtoTest.MVC.csproj", "{68C6942D-DD81-416A-93E7-1021DDA12314}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AvtoTest.MVC", "AvtoTest.MVC\AvtoTest.MVC.csproj", "{68C6942D-DD81-416A-93E7-1021DDA12314}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvtoTest.Data", "AvtoTest.Data\AvtoTest.Data.csproj", "{B23C1480-FB26-4075-AA8F-EC0B8615A79E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AvtoTest.Data", "AvtoTest.Data\AvtoTest.Data.csproj", "{B23C1480-FB26-4075-AA8F-EC0B8615A79E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvtoTest.Services", "AvtoTest.Services\AvtoTest.Services.csproj", "{B6006052-91A9-478A-849E-7D5D51F92A21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AvtoTest.Services", "AvtoTest.Services\AvtoTest.Services.csproj", "{B6006052-91A9-478A-849E-7D5D51F92A21}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

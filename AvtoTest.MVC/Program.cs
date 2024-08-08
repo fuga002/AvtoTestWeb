@@ -1,5 +1,4 @@
 using AvtoTest.Data.Context;
-using AvtoTest.Data.Entities;
 using AvtoTest.Data.Repositories;
 using AvtoTest.Services.Services;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +23,9 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>();
 
 
-
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IResultRepository, ResultRepository>();
+//builder.Services.AddScoped<ResultService>();
 
 /*
 builder.Services.AddDefaultIdentity<CustomUser>(options =>

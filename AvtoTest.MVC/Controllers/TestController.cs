@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Sockets;
+using AvtoTest.Data.Repositories;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AvtoTest.MVC.Controllers;
 
@@ -17,24 +19,23 @@ public class TestController : Controller
     private readonly TestService _testService;
     private const string CorrectAnswersCount = "CorrectAnswersCount";
     private readonly UserManager<IdentityUser> _userManager;
-    private readonly AppDbContext _appDbContext;
+    private readonly IResultRepository _resultRepository;
 
     public TestController(TestService testService, 
-        UserManager<IdentityUser> userManager, AppDbContext appDbContext)
+        UserManager<IdentityUser> userManager, IResultRepository resultRepository)
     {
         _testService = testService;
         _userManager = userManager;
-        _appDbContext = appDbContext;
+        _resultRepository = resultRepository;
     }
     [Authorize]
     public async Task<IActionResult> GetTests(byte ticketId,int testId = 0, string language = null, bool retake = false)
     {
         var user = await GetUser();
 
-        var result = await _appDbContext.Results.FirstOrDefaultAsync(r => r.TicketId == 
-            ticketId && r.UserId == user.Id);
+        var result = await _resultRepository.GetResultById(ticketId, user.Id);
 
-        var ticket = new Ticket();
+       
 
         if (result is not null && retake == false)
         {
@@ -43,35 +44,13 @@ public class TestController : Controller
 
         if (retake && result is not null)
         {
-            _appDbContext.Results.Remove(result);
-            await _appDbContext.SaveChangesAsync();
+            await _resultRepository.DeleteResult(result);
         }
 
-        ticket = new Ticket() { Id = ticketId };
-        
-         
+        _testService.ChangeLanguage(language, HttpContext);
 
-        if (!string.IsNullOrEmpty(language))
-        {
-            AddCookie("language",language);
-        }
-        else
-        {
-            language = GetCookie("language");
-        }
-        _testService.ChangeLanguage(language);
+        (Ticket ticket, testId) = _testService.GetTicketAndTestId(ticketId, testId);
 
-        if (testId == 0)
-        {
-            testId = ticket.StartIndex;
-        }
-
-        var tests = _testService.Tests.
-            Where(t => t.Id >= ticket.StartIndex &&
-                       t.Id <= ticket.EndIndex).
-            ToList();
-
-        var test = tests.Find(t => t.Id == testId);
 
         ViewBag.TicketId = ticket.Id;
 
@@ -79,6 +58,8 @@ public class TestController : Controller
 
         ViewBag.Ticket = ticket;
 
+        var (test, tests) = 
+            _testService.GetSortedTests(ticket.StartIndex, ticket.EndIndex, testId);
 
         ViewBag.Tests = tests;
 
@@ -86,21 +67,12 @@ public class TestController : Controller
     }
 
     [HttpPost]
-    public IActionResult GetTestsPost(byte ticketId = 0, int testId = 0, int choiceId = 0)
+    public async Task<IActionResult> GetTestsPost(byte ticketId = 0, int testId = 0, int choiceId = 0)
     {
-        int count = GetCorrectAnswersCount();
-       
+        var test = _testService.GetTestById(testId);
 
-        var test = _testService.Tests.Find(t => t.Id == testId);
-        if (test.Choices[choiceId].Answer)
-        {
-            count++;
-        }
-        if (testId != 0)
-        {
-            AddCookie(testId.ToString(),choiceId.ToString());
-            AddCookie(CorrectAnswersCount,count.ToString());
-        }
+        await AddScore(testId, choiceId, test);
+
         return RedirectToAction("GetTests", new {ticketId = ticketId,testId = testId});
     }
 
@@ -132,16 +104,7 @@ public class TestController : Controller
 
         var user = await GetUser();
 
-        var result = new Result()
-        {
-            TicketId = ticket.Id,
-            CorrectAnswersCount = (byte)correctAnswerCount,
-            UserId = user!.Id
-        };
-
-        _appDbContext.Results.Add(result);
-        await _appDbContext.SaveChangesAsync();
-
+        await _resultRepository.AddResult(ticketId,user.Id,correctAnswerCount);
         DeleteCookies(ticket);
         DeleteCookie("language");
         return View();
@@ -158,13 +121,6 @@ public class TestController : Controller
         HttpContext.Response.Cookies.Append(key, value);
     }
 
-    private string GetCookie(string key)
-    {
-        string value = HttpContext.Request.Cookies[key];
-        if (string.IsNullOrEmpty(value))
-            return string.Empty;
-        return value;
-    }
 
     private void DeleteCookie(string key)
     {
@@ -202,16 +158,22 @@ public class TestController : Controller
     }
 
 
-    public IActionResult GetPath()
-    {
-        var path = _testService.GetPath();
-        ViewBag.Path = path;
-        return View();
-    }
-
     private async Task<IdentityUser> GetUser()
     {
         return await _userManager!.GetUserAsync(User)!;
     }
 
+    private async Task AddScore(int testId,int choiceId,Test test)
+    {
+        int count = GetCorrectAnswersCount();
+        if (test.Choices[choiceId].Answer)
+        {
+            count++;
+        }
+        if (testId != 0)
+        {
+            AddCookie(testId.ToString(), choiceId.ToString());
+            AddCookie(CorrectAnswersCount, count.ToString());
+        }
+    }
 }
